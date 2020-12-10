@@ -1,5 +1,5 @@
-#include <Pinger.h>
-#include <PingerResponse.h>
+//#include <Pinger.h>
+//#include <PingerResponse.h>
 #include <OneWire.h> //Librairie du bus OneWire
 #include <math.h>
 #include <DallasTemperature.h> //Librairie du capteur
@@ -34,7 +34,7 @@ Boutton MoinsBoutton(115, BOUNCE_DELAY);
 Bsec iaqSensor;
 
 // Set global to avoid object removing after setup() routine
-Pinger pinger;
+//Pinger pinger;
 
 ESP8266WebServer server(80); //server web
 OneWire oneWire(ds18b20); //Bus One Wire sur la pin 2 de l'arduino
@@ -516,6 +516,8 @@ void setup() {
     }
   configFile.close();
   //Création du point d'accès
+  wifiManager.setConnectTimeout(60);
+  wifiManager.setTimeout(60);
   WiFiManagerParameter custom_text2("<p>Parametres d'acces au thermostat</p>");
   WiFiManagerParameter userweb("Utilisateur_web", "Utilisateur", user_web, 12);
   WiFiManagerParameter mdpweb("Motdepasse_web", "Mot de passe", mdp_web, 13);
@@ -534,6 +536,9 @@ void setup() {
   wifiManager.addParameter(&domaine_dyndns);
   wifiManager.addParameter(&url_dyndns);
   wifiManager.autoConnect("Thermostat_connecte");
+  if (WiFi.status()!= WL_CONNECTED){
+    ESP.reset();
+  }
   Serial.println("Coonnection au WIFI avec succès");
   strcpy(user, user_dyndns.getValue());
   strcpy(mdp, mdp_dyndns.getValue());
@@ -643,6 +648,7 @@ void loop() {
   server.handleClient();
   ftpSrv.handleFTP(); 
 
+//Serial.println("Wlconnect : " + (String)WL_CONNECTED + " : " + (String)WiFi.status());
 
   //Gestion du boutton Reset
   bouttonReset ();
@@ -651,13 +657,14 @@ void loop() {
   if (millis()-MillisTestWifi>=DelaisTestWifi){
     updatestatut ();
     Serial.print("test de la connexion wifi : ");
-    if (!pinger.Ping( WiFi.gatewayIP())){
+//    if (!pinger.Ping( WiFi.gatewayIP())){
+ if (WiFi.status()!= WL_CONNECTED){
       Serial.println("wifi KO");
       couleur_statut=&couleur_error[0];
       displayColor(&couleur_statut[0], luminosite);
       WiFi.reconnect();
       StatutWifi = false;
-    } else if (StatutWifi = false) {
+    } else if (StatutWifi == false) {
       Serial.println("Wifi de nouveau OK");
       StatutWifi = true;
       if (Mf==true){ //marche forcée 
