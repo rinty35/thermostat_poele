@@ -17,9 +17,9 @@ FtpServer ftpSrv;
 #include "bsec.h" // Librairie Bosh BME680
 #include "boutton.h"
 #define BOUNCE_DELAY  5 // pause anti-rebonds = 5 ms
-#define Vert D6
-#define Rouge D7
-#define Bleu  D8
+#define Vert D7
+#define Rouge D8
+#define Bleu  D6
 #define ds18b20 D5
 #define PIN_RESET_BUTTON A0
 #define RELAIS D3
@@ -265,14 +265,23 @@ void insmesure(){
     }
 
     // insérer fichier
-    if (file.size() >= ((TailleEnregistrement) * NbEnregistrement) || dateenr < (DateMesure - NbEnregistrement * 60) ){ // test taille maximale ou premier enregistrement datant de plus de 7j
+    if (file.size() >= ((TailleEnregistrement) * NbEnregistrement) || dateenr < (DateMesure - (NbEnregistrement + 24*60) * 60) ){ // test taille maximale ou premier enregistrement datant de plus de 8j
       Serial.println("taille du fichier max ou 7J d'enregistrement présent - rotation du fichier");
       File filetemp = SPIFFS.open("/filetemp.txt", "w");
       //file.seek((TailleEnregistrement), SeekSet);
       Serial.println("reecriture du fichier");
       //filetemp.println(buffer);
       while (file.available()) {
-        filetemp.print(file.readStringUntil('\n')+"\n");
+        if (!buffer.equals("")){
+          buffer = file.readStringUntil('\n');// récupération de la premère ligne
+          buffer.toCharArray(char_array,TailleEnregistrement);
+          dateenr = atoi(strtok(char_array, ","));
+          if (dateenr < (DateMesure - (NbEnregistrement) * 60)){
+            filetemp.print(buffer +"\n");
+          }
+        }
+
+        //filetemp.print(file.readStringUntil('\n')+"\n");
       }
       file.close();
       Serial.println("Fin de reecriture du fichier et suppression du fichier total");
