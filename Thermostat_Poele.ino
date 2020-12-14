@@ -22,7 +22,7 @@ FtpServer ftpSrv;
 #define Bleu  D6
 #define ds18b20 D5
 #define PIN_RESET_BUTTON A0
-#define RELAIS D3
+#define RELAIS D0
 
 
 
@@ -272,11 +272,11 @@ void insmesure(){
       Serial.println("reecriture du fichier");
       //filetemp.println(buffer);
       while (file.available()) {
+        buffer = file.readStringUntil('\n');// récupération de la premère ligne
+        buffer.toCharArray(char_array,TailleEnregistrement);
         if (!buffer.equals("")){
-          buffer = file.readStringUntil('\n');// récupération de la premère ligne
-          buffer.toCharArray(char_array,TailleEnregistrement);
           dateenr = atoi(strtok(char_array, ","));
-          if (dateenr < (DateMesure - (NbEnregistrement) * 60)){
+          if (dateenr >= (DateMesure - (NbEnregistrement) * 60)){
             filetemp.print(buffer +"\n");
           }
         }
@@ -344,7 +344,7 @@ void sendMesuresHisto (){
       if (!buffer.equals("")){
         buffer.toCharArray(char_array,TailleEnregistrement);
         dateenr = strtok(char_array, ",");
-          if (atol(dateenr)>(DateMesure - (histodelais))){
+        if (atol(dateenr)>(DateMesure - (histodelais))){
             if (taillelu>0){
               message += ",";
             }
