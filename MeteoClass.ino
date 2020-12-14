@@ -23,7 +23,7 @@ void Meteo::Update(unsigned long datedemesure, float pressionmesure,float txHumi
       } else {
   //      Serial.println("Historique charge " + _nomfichier);
        // serializeJson(_Tab_Meteo, Serial);
-        Serial.println("");
+        Serial.println("date : " + (String)datedemesure + " Pression : " + (String)pressionmesure + " Tx humidite : " + (String)txHumidite + " IAQ : " + (String)qualiteAir);
         /*if (_Tab_Meteo.size()== _SizeHistMeteo){
           _nbenrmeteo = 0;
         }else{
