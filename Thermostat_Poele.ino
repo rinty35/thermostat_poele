@@ -636,6 +636,10 @@ void setup() {
   server.serveStatic("/css", SPIFFS, "/css");
   server.serveStatic("/js", SPIFFS, "/js");
   server.serveStatic("/img", SPIFFS, "/img");
+  server.serveStatic("/meteo", SPIFFS, "/index.html");
+  server.serveStatic("/poele", SPIFFS, "/index.html");
+  server.serveStatic("/configuration", SPIFFS, "/index.html");
+  server.serveStatic("/help", SPIFFS, "/index.html");
   server.serveStatic("/api/historymeteoheure.json", SPIFFS, "/historymeteoheure.json");
   server.serveStatic("/api/historymeteoquotidien.json", SPIFFS, "/historymeteoquotidien.json");
   server.serveStatic("/api/historymeteohebdo.json", SPIFFS, "/historymeteohebdo.json");
