@@ -721,6 +721,27 @@ void loop() {
           humidite += floattoint(iaqSensor.humidity);
           nbenrmeteo++;
           Meteoheure.Update(DateMesure,iaqSensor.pressure/100,iaqSensor.humidity,iaqSensor.iaq);
+          if (MillisMesure - MillisEnrQuo > DelaisEnrQuo ){
+            MillisEnrQuo = MillisMesure;
+            Meteoquotidien.Update(DateMesure,round(inttofloat(pression)/nbenrmeteo*100)/100,round(inttofloat(humidite)/nbenrmeteo*100)/100,round(inttofloat(IAQ)/nbenrmeteo*100)/100);
+            IAQhebdo += floattoint(iaqSensor.iaq);
+            pressionhebdo += floattoint(iaqSensor.pressure/100);
+            humiditehebdo += floattoint(iaqSensor.humidity);
+            nbenrmeteohebdo++;
+            Serial.println("nbenr ebdo : " + (String)nbenrmeteohebdo + " Pression Hebdo : " + (String)pressionhebdo + " humidite hebdo : " + (String)humiditehebdo + " IAQ Hebdo : " + (String)IAQhebdo);
+            nbenrmeteo=0;
+            pression = 0;
+            humidite=0;
+            IAQ=0;
+            if (MillisMesure - MillisEnrHebdo > DelaisEnrHebdo ){
+              MillisEnrHebdo = MillisMesure;
+              Meteohebdo.Update(DateMesure,round(inttofloat(pressionhebdo)/nbenrmeteohebdo*100)/100,round(inttofloat(humiditehebdo)/nbenrmeteohebdo*100)/100,round(inttofloat(IAQhebdo)/nbenrmeteohebdo*100)/100);
+              nbenrmeteohebdo=0;
+              pressionhebdo = 0;
+              humiditehebdo=0;
+              IAQhebdo=0;
+            }
+          }
         } else {
           checkIaqSensorStatus();
         }
@@ -732,26 +753,7 @@ void loop() {
         insmesure();
         nbenr = 0;
       }
-      if (MillisMesure - MillisEnrQuo > DelaisEnrQuo ){
-        MillisEnrQuo = MillisMesure;
-        Meteoquotidien.Update(DateMesure,round(inttofloat(pression)/nbenrmeteo*100)/100,round(inttofloat(humidite)/nbenrmeteo*100)/100,round(inttofloat(IAQ)/nbenrmeteo*100)/100);
-        IAQhebdo += IAQ;
-        pressionhebdo += pression;
-        humiditehebdo += humidite;
-        nbenrmeteohebdo++;
-        nbenrmeteo=0;
-        pression = 0;
-        humidite=0;
-        IAQ=0;
-      }
-      if (MillisMesure - MillisEnrHebdo > DelaisEnrHebdo ){
-        MillisEnrHebdo = MillisMesure;
-        Meteohebdo.Update(DateMesure,round(inttofloat(pressionhebdo)/nbenrmeteohebdo*100)/100,round(inttofloat(humiditehebdo)/nbenrmeteohebdo*100)/100,round(inttofloat(IAQhebdo)/nbenrmeteo*100)/100);
-        nbenrmeteohebdo=0;
-        pressionhebdo = 0;
-        humiditehebdo=0;
-        IAQhebdo=0;
-      }
+      
     }
     displayColor(&couleur_statut[0], luminosite);    // turn the LED off by making the voltage LOW
   }
