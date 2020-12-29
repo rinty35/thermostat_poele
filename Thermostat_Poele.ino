@@ -12,6 +12,15 @@
 #include <ESP8266FtpServer.h>
 FtpServer ftpSrv;
 #include "meteo.h"
+//librairie OLED
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
 
 #include <ESP8266HTTPClient.h>
 #include "bsec.h" // Librairie Bosh BME680
@@ -68,7 +77,7 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org" ); //, utcOffsetInSeconds); heure
 
 unsigned long DateMesure;
 unsigned long PrevDateMesure;
-short int temp=0; // mesure de la température
+short int temp=-127; // mesure de la température
 
 short int tab_temp[2];
 bool tab_statut[2];
@@ -474,10 +483,19 @@ void setup() {
  
   Serial.begin(115200); //Permet la communication en serial
   Serial.println("Port série initialisé");
+
+
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;);
+  }
+  display.setTextColor(WHITE);
+  display.setTextSize(1);
+  DisplayChargement("Port serie initialise");
+  
   analogWriteRange(256);
   Serial.println("Nouveau Range PWM initialisé");
-
-
+  DisplayChargement("Range PWM initialise");
 
   for (int i = 0 ; i<2 ; i++){
     tab_temp[i]=0;
@@ -495,24 +513,30 @@ void setup() {
   // Démarre le système de fichier SPIFFS
   if (!SPIFFS.begin()){
     Serial.println("Echec du montage SPIFFS");
+    DisplayChargement("Echec du montage SPIFFS");
+ 
   } else {
     Serial.println("Succes du montage SPIFFS");
-
+    DisplayChargement("SPIFFS OK"); 
     loadStatut();
     File configFile = SPIFFS.open("/config.json", "r");
     if (!configFile){
       Serial.println("Aucun statut existe");
+      DisplayChargement("Aucun statut existe"); 
     } else {
        if (  configFile.size() == 0 ) {
           Serial.println("Fichier statut vide !");
+          DisplayChargement("Fichier statut vide !"); 
        } else {
           
           DeserializationError error = deserializeJson(configuration, configFile); 
           if (error) {
-            Serial.println("Impossible de lire le JSON");
+            Serial.println("Impossible de lire status.json");
+            DisplayChargement("Impossible de lire status.json"); 
             Serial.println(error.c_str());
           } else { 
             Serial.println("chargement config wifi");
+            DisplayChargement("De la config wifi"); 
             serializeJson(configuration, Serial);
             strcpy (user, configuration["user"]);
             strcpy (mdp, configuration["mdp"]);
@@ -548,7 +572,8 @@ void setup() {
   if (WiFi.status()!= WL_CONNECTED){
     ESP.reset();
   }
-  Serial.println("Coonnection au WIFI avec succès");
+  Serial.println("Connection au WIFI OK");
+  DisplayChargement("Connection au WIFI OK");
   strcpy(user, user_dyndns.getValue());
   strcpy(mdp, mdp_dyndns.getValue());
   strcpy(domaine, domaine_dyndns.getValue());
@@ -559,9 +584,11 @@ void setup() {
   URL_MAJ = "http://" + (String)user + ":" + (String)mdp + "@" + (String)url + (String)domaine ;
   if (shouldSaveConfig) {
     Serial.println("saving config");
+    DisplayChargement("Sauvegarde Configuration");
     File configFile = SPIFFS.open("/config.json", "w");
     if (!configFile) {
       Serial.println("failed to open config file for writing");
+      DisplayChargement("Erreur d'ecriture du fichier de configuration");
     } else {
       configuration["user"] = String(user);
       configuration["mdp"]= String(mdp);
@@ -578,6 +605,7 @@ void setup() {
   Serial.print("Ip local : ");
   //Serial.println(IpAdress2String (WiFi.localIP()));
   Serial.println(WiFi.localIP().toString());
+  DisplayChargement("IP : " + WiFi.localIP().toString());
   Serial.print("Gateway : ");
   Serial.println(WiFi.gatewayIP());
   Serial.print("Signal Strength : ");
@@ -588,6 +616,7 @@ void setup() {
   }
   //Initialisation de la récupération du temps
   Serial.println("récupération du temps");
+  DisplayChargement("De la date et heure");
   timeClient.begin();
   timeClient.update();
   DateMesure = timeClient.getEpochTime();
@@ -595,12 +624,15 @@ void setup() {
 
   //Activation des capteurs
   Serial.println("Paramétrage du capteur");
+  DisplayChargement("Des capteurs");
   sensors.begin(); 
   sensors.getAddress(sensorDeviceAddress, 0); //Demande l'adresse du capteur à l'index 0 du bus
   sensors.setResolution(sensorDeviceAddress, 11); //Résolutions possibles: 9,10,11,12
   sensors.requestTemperatures(); //Demande la température aux capteurs
   temp = floattoint (sensors.getTempCByIndex(0));
-  
+  if (temp!=-1270){
+    DisplayChargement("Thermostat OK");
+  }
   Wire.begin();
   iaqSensor.begin(BME680_I2C_ADDR_SECONDARY, Wire);
   Serial.println( "\nBSEC library version " + String(iaqSensor.version.major) + "." + String(iaqSensor.version.minor) + "." + String(iaqSensor.version.major_bugfix) + "." + String(iaqSensor.version.minor_bugfix));
@@ -619,12 +651,15 @@ void setup() {
   iaqSensor.updateSubscription(sensorList, 10, BSEC_SAMPLE_RATE_LP);
   if(!iaqSensor.run()){
     checkIaqSensorStatus();
+  } else {
+    DisplayChargement("Humidite/Pression OK");
   }
    // serveur FTP
   ftpSrv.begin(user_web, mdp_web); 
-  
+    DisplayChargement("Demarrage serveur FTP");
    //Paramétrage du serveur web
   Serial.println("Démarrage du serveur web");
+  DisplayChargement("Demarrage serveur web");
   server.onNotFound([]() {                              // If the client requests any URI
           Serial.println(F("On not found"));
         if (!handleFileRead(server.uri())){                  // send it if it exists
@@ -650,14 +685,14 @@ void setup() {
   server.on("/api/update", majstatut);
   server.begin();
 
+  DisplayChargement("Finalisation");
   couleur_statut=&couleur_fonction[0];
   displayColor(&couleur_statut[0], luminosite);
-
-
 }
 
 // the loop function runs over and over again forever
 void loop() {
+ // display.startscrollright(0x00, 0x0F);
   server.handleClient();
   ftpSrv.handleFTP(); 
 
@@ -673,6 +708,7 @@ void loop() {
 //    if (!pinger.Ping( WiFi.gatewayIP())){
  if (WiFi.status()!= WL_CONNECTED){
       Serial.println("wifi KO");
+      DisplayLCD("Wifi KO");
       couleur_statut=&couleur_error[0];
       displayColor(&couleur_statut[0], luminosite);
       WiFi.reconnect();
@@ -691,6 +727,7 @@ void loop() {
       displayColor(&couleur_statut[0], luminosite);
     }else{
       Serial.println("Wifi OK");
+      DisplayLCD("Wifi OK");
       dyndns ();
     }
     MillisTestWifi = millis();
@@ -701,16 +738,18 @@ void loop() {
     MillisMesure = millis();
     displayColor(&couleur_mesure[0], luminosite);  // turn the LED on (HIGH is the voltage level)
     timeClient.update();
-    //delay(100);
+    delay(100);
 
     sensors.requestTemperatures(); //Demande la température aux capteurs
     temp = floattoint (sensors.getTempCByIndex(0));
     DateMesure = timeClient.getEpochTime();
-    
-    
+
     if (temp != -127 && DateMesure > PrevDateMesure){
       PrevDateMesure = DateMesure;
       ctrlchauff(); // controle d'enclenchement chauffage
+      timeClient.setTimeOffset(3600);
+      DisplayLCD(timeClient.getFormattedTime());
+      timeClient.setTimeOffset(0);
       tab_mesure[nbenr]=temp;
       nbenr++;
       if (MillisMesure - MillisEnr > DelaisEnr ){
@@ -728,7 +767,7 @@ void loop() {
             pressionhebdo += floattoint(iaqSensor.pressure/100);
             humiditehebdo += floattoint(iaqSensor.humidity);
             nbenrmeteohebdo++;
-            Serial.println("nbenr ebdo : " + (String)nbenrmeteohebdo + " Pression Hebdo : " + (String)pressionhebdo + " humidite hebdo : " + (String)humiditehebdo + " IAQ Hebdo : " + (String)IAQhebdo);
+            //Serial.println("nbenr hebdo : " + (String)nbenrmeteohebdo + " Pression Hebdo : " + (String)pressionhebdo + " humidite hebdo : " + (String)humiditehebdo + " IAQ Hebdo : " + (String)IAQhebdo);
             nbenrmeteo=0;
             pression = 0;
             humidite=0;
@@ -770,8 +809,57 @@ void displayColor(byte *couleur,byte lum) {
   analogWrite(Bleu, couleur[2]*lum/100);
 }
 
-
-
+void DisplayLCD (String message){
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setCursor(0, 0);
+    display.print(message);
+    display.setCursor(121, 0);
+    if (S==true) {
+      display.cp437(true);
+      display.write(15);      
+    }
+    display.drawLine(0, 9, 128, 9, WHITE);
+    display.drawLine(0, 32, 128, 32, WHITE);
+    display.setCursor(0, 13);
+    display.println("Consigne :");
+    display.setCursor(0, 36);
+    display.println("Mesure :");
+    display.setTextSize(2);
+    display.setCursor(62, 13);
+    display.print(inttofloat(Tc),1);
+    display.setTextSize(1);
+    display.cp437(true);
+    display.write(248);
+    display.setTextSize(2);
+    display.print("C");
+    display.setCursor(62, 36);
+    display.print(inttofloat(temp),1);
+    display.setTextSize(1);
+    display.cp437(true);
+    display.write(248);
+    display.setTextSize(2);
+    display.print("C");
+    display.setTextSize(1);
+    display.setCursor(0, 47);
+    display.print("Hum:");
+    display.print(iaqSensor.humidity,1);
+    display.print("%");
+    display.setCursor(0, 56);
+    display.print("Pres:");
+    display.print(iaqSensor.pressure/100,1);
+    display.print("Hpa");
+    display.display(); 
+}
+void DisplayChargement(String message){
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.print("Chargement...");
+  display.setCursor(0, 10);
+  display.print(message);
+  display.display();
+  delay(2000); 
+}
 void bouttonReset (){
   unsigned long millisCheck = millis();
   if (ResetBoutton.pressed()||ResetBoutton.pressedlong()) {
@@ -853,6 +941,7 @@ void checkIaqSensorStatus(void)
     if (iaqSensor.status < BSEC_OK) {
       Serial.println("BSEC error code : " + String(iaqSensor.status));
       couleur_statut=&couleur_error[0];
+      DisplayLCD("Erreur capteur Hygro");
     } else {
       Serial.println( "BSEC warning code : " + String(iaqSensor.status));
     }
@@ -864,6 +953,7 @@ void checkIaqSensorStatus(void)
     if (iaqSensor.bme680Status < BME680_OK) {
       Serial.println("BME680 error code : " + String(iaqSensor.bme680Status));
       couleur_statut=&couleur_error[0];
+      DisplayLCD("Erreur capteur Hygro");
     } else {
       Serial.println( "BME680 warning code : " + String(iaqSensor.bme680Status));
     }
