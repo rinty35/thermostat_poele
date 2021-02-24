@@ -1,5 +1,3 @@
-//#include <Pinger.h>
-//#include <PingerResponse.h>
 #include <OneWire.h> //Librairie du bus OneWire
 #include <math.h>
 #include <DallasTemperature.h> //Librairie du capteur
@@ -36,8 +34,10 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 
 Boutton ResetBoutton(10, BOUNCE_DELAY);
-Boutton PlusBoutton(64, BOUNCE_DELAY);
-Boutton MoinsBoutton(115, BOUNCE_DELAY);
+Boutton PlusBoutton(166, BOUNCE_DELAY);
+Boutton MoinsBoutton(113, BOUNCE_DELAY);
+Boutton MFBoutton(60, BOUNCE_DELAY);
+
 
 // Create an object of the class Bsec https://github.com/BoschSensortec/BSEC-Arduino-library
 Bsec iaqSensor;
@@ -66,10 +66,12 @@ byte *couleur_error = &COLOR_RED[0];
 byte *couleur_forcee = &COLOR_MAGENTA[0];
 byte *couleur_haut = &COLOR_YELLOW[0];
 byte *couleur_statut;
-const byte luminosite = 20; //pourcentage
+//const byte luminosite = 5; //pourcentage
+#define luminosite 5
 
 
-const unsigned long appuilong = 3000; //délais d'appui sur le boutton reset en ms
+//const unsigned long appuilong = 3000; //délais d'appui sur le boutton reset en ms
+#define appuilong 3000
 unsigned long millisStart; // calcul du délais du boutton reset
 
 WiFiUDP ntpUDP; // Define NTP Client to get time
@@ -91,11 +93,14 @@ char domaine[100] ="votre domaine";
 char user_web[12] = "Utilisateur";
 char mdp_web[13] = "Mot de passe";
  
-const unsigned long DelaisTestWifi = 5*60*1000; // Délais de contrôle du wifi
-const short int DelaisSecu = 15*60; // Délais de sécurité entre un allumage et l'extinction en seconde
-const unsigned long DelaisMesure = 10 * 1000; // ecart entre deux mesures
-unsigned long MillisTestWifi = millis();
-unsigned long MillisMesure = MillisTestWifi; // calcul des délais mesures
+//const unsigned long DelaisTestWifi = 5*60*1000; // Délais de contrôle du wifi
+#define DelaisTestWifi 300000
+//const short int DelaisSecu = 15*60; // Délais de sécurité entre un allumage et l'extinction en seconde
+#define DelaisSecu 900
+//const unsigned long DelaisMesure = 10 * 1000; // ecart entre deux mesures
+#define DelaisMesure 10000
+unsigned long MillisMesure =  millis(); // calcul des délais mesures
+unsigned long MillisLCD =  millis(); // actualisation LCD
 
 #define FILE_STATUT "/statut.json"
 const size_t capacity_statut = JSON_OBJECT_SIZE(9) + 100;
@@ -106,10 +111,13 @@ byte Toh = 5; // décalage de déclanchement en °
 unsigned long Secu = 0;
 
 #define HISTORY_FILE_TOTAL "/historytotal.json"
-const byte TailleEnregistrement = 19;//taille de la chaine + 1 (retour chariot)
-const short int NbEnregistrement =  10080; // 7j x 24h x 60min ; 
-const unsigned long DelaisEnr = 1000 * 60; // ecart entre deux sauvegardes
-unsigned long MillisEnr =  MillisTestWifi; // calcul des délais d'enregistrement
+//const byte TailleEnregistrement = 19;//taille de la chaine + 1 (retour chariot)
+#define TailleEnregistrement 19
+//const short int NbEnregistrement =  10080; // 7j x 24h x 60min ;
+#define NbEnregistrement 10080
+//const unsigned long DelaisEnr = 1000 * 60; // ecart entre deux sauvegardes
+#define DelaisEnr 60000
+unsigned long MillisEnr =  MillisMesure; // calcul des délais d'enregistrement
 
 #define HISTORY_METEO_HEURE "/historymeteoheure.json"
 #define HISTORY_METEO_QUOTIDIEN "/historymeteoquotidien.json"
@@ -117,11 +125,13 @@ unsigned long MillisEnr =  MillisTestWifi; // calcul des délais d'enregistremen
 //const short int     SizeHistMeteoHeure = (60 * 60 * 1000) / DelaisEnr;
 Meteo Meteoheure(60, HISTORY_METEO_HEURE); //60 enregistrement
 Meteo Meteoquotidien(96, HISTORY_METEO_QUOTIDIEN); //96 un enregistrement toutes les 15mins
-Meteo Meteohebdo(10, HISTORY_METEO_HEBDO);
-const unsigned long DelaisEnrQuo = 1000 * 60 * 15; // ecart entre deux sauvegardes
-unsigned long MillisEnrQuo =  MillisTestWifi; // calcul des délais d'enregistrement
-const unsigned long DelaisEnrHebdo = 1000 * 60 * 60; // Toutes les heures
-unsigned long MillisEnrHebdo =  MillisTestWifi; // calcul des délais d'enregistrement
+Meteo Meteohebdo(168, HISTORY_METEO_HEBDO); //un enregistrement par heure
+//const unsigned long DelaisEnrQuo = 1000 * 60 * 15; // ecart entre deux sauvegardes
+#define DelaisEnrQuo 900000
+unsigned long MillisEnrQuo =  MillisMesure; // calcul des délais d'enregistrement
+//const unsigned long DelaisEnrHebdo = 1000 * 60 * 60; // Toutes les heures
+#define DelaisEnrHebdo 3600000
+unsigned long MillisEnrHebdo =  MillisMesure; // calcul des délais d'enregistrement
 unsigned int humidite,  humiditehebdo = 0;
 unsigned int pression, pressionhebdo = 0 ;
 unsigned int IAQ, IAQhebdo = 0;
@@ -274,24 +284,28 @@ void insmesure(){
     }
 
     // insérer fichier
-    if (file.size() >= ((TailleEnregistrement) * NbEnregistrement) || dateenr < (DateMesure - (NbEnregistrement + 24*60) * 60) ){ // test taille maximale ou premier enregistrement datant de plus de 8j
+    if ((file.size() >= ((TailleEnregistrement) * NbEnregistrement) || dateenr < (DateMesure - (NbEnregistrement +(24*60) ) * 60))||(dateenr>DateMesure) ){ // test taille maximale ou premier enregistrement datant de plus de 8j
       Serial.println("taille du fichier max ou 7J d'enregistrement présent - rotation du fichier");
       File filetemp = SPIFFS.open("/filetemp.txt", "w");
       //file.seek((TailleEnregistrement), SeekSet);
       Serial.println("reecriture du fichier");
+      Serial.print("*");
       //filetemp.println(buffer);
       while (file.available()) {
+        Serial.print("-");
         buffer = file.readStringUntil('\n');// récupération de la premère ligne
         buffer.toCharArray(char_array,TailleEnregistrement);
+        //Serial.println(buffer);
         if (!buffer.equals("")){
           dateenr = atoi(strtok(char_array, ","));
-          if (dateenr >= (DateMesure - (NbEnregistrement) * 60)){
+          if ((dateenr >= (DateMesure - NbEnregistrement * 60))&&(dateenr<DateMesure)){ //récupération des enregistrements quand la date dans les 7J et pas au dessus du dernier enregistrement
             filetemp.print(buffer +"\n");
           }
         }
 
         //filetemp.print(file.readStringUntil('\n')+"\n");
       }
+      Serial.print("*");
       file.close();
       Serial.println("Fin de reecriture du fichier et suppression du fichier total");
       SPIFFS.remove(HISTORY_FILE_TOTAL);
@@ -396,8 +410,8 @@ void sendMesuresHisto (){
 void ctrlchauff(){
   bool S_prec = S;
   StaticJsonDocument<capacity_statut> Tab_Statut;
-  Serial.println("Temp = " + (String)temp + "seuil bas = " + (String)(Tc+Tob));
-  if(DateMesure > Secu && S == true){
+  //Serial.println("Temp = " + (String)temp + " seuil bas = " + (String)(Tc+Tob));
+  if(DateMesure > Secu && S == true && Secu !=0){
     Serial.println("Sécurisation levée");
     Secu=0;
   }
@@ -438,23 +452,58 @@ void ctrlchauff(){
 }
 
 bool handleFileRead(String path){
-  Serial.print(F("handleFileRead: "));
-  Serial.println(path);
- 
-  if (!server.authenticate(user_web, mdp_web)) {
-      server.requestAuthentication();
-  }
+  //Serial.print(F("handleFileRead: "));
+  //Serial.println(path);
+  bool Proxy = 0;
+  String message = "Your IP : ";
+
  
   if(path.endsWith("/")) path += F("index.html"); 
     String contentType = getContentType(path);  
     if( SPIFFS.exists(path)){     // If the file exists, either as a compressed archive, or normal
+      if (!server.authenticate(user_web, mdp_web)) {
+        server.requestAuthentication();
+      }
       fs::File file = SPIFFS.open(path, "r");                 // Open the file
       size_t sent = server.streamFile(file, contentType); // Send it to the client
       file.close();                                           // Close the file again
       Serial.println(String(F("\tSent file: ")) + path + String(F(" of size ")) + sent);
     return true;
   }
-  Serial.println(String(F("\tFile Not Found: ")) + path);
+  //Serial.print(server.client().remoteIP().toString());
+  //Serial.printf("num headers: %d\n",server.headers());
+
+//  Serial.println(String(F("\tFile Not Found: ")) + path);
+  
+  for(int k=0;k<server.headers();k++) {
+    //Serial.printf("header: %s = %s\n", server.headerName(k).c_str(), server.header(k).c_str());
+    if (strcmp(server.headerName(k).c_str(),"X-Forwarded-For")==0 && strlen(server.header(k).c_str())!= 0 ) {
+      //Serial.println(strlen(server.header(k).c_str()));
+      Serial.printf("client : %s" , server.header(k).c_str());
+      message += server.header(k);
+      k=server.headers();
+      Proxy = 1;
+    }
+  }
+  if (Proxy==0){
+    message += server.client().remoteIP().toString();
+    Serial.print(server.client().remoteIP().toString());
+  }
+  Serial.println (" File Not Found : " + server.uri());
+  message += "\nFile Not Found\n\n";
+  message += "URI: ";
+  message += server.uri();
+  message += "\nMethod: ";
+  message += (server.method() == HTTP_GET)?"GET":"POST";
+  message += "\nArguments: ";
+  message += server.args();
+  message += "\n";
+  for (uint8_t i=0; i<server.args(); i++){
+    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
+  }
+  server.send(404, "text/plain", message);
+      //      server.send(404, "text/plain", "Your IP : " + server.client().remoteIP().toString() + "\nURL Not Found");
+
   return false;                                             // If the file doesn't exist, return false
 }
 
@@ -660,26 +709,31 @@ void setup() {
    //Paramétrage du serveur web
   Serial.println("Démarrage du serveur web");
   DisplayChargement("Demarrage serveur web");
+  const char * headerkeys[] = {"X-Forwarded-For"} ;
+  size_t headerkeyssize = sizeof(headerkeys)/sizeof(char*);
+  server.collectHeaders(headerkeys, headerkeyssize ); 
   server.onNotFound([]() {                              // If the client requests any URI
-          Serial.println(F("On not found"));
+
+        //Serial.println(F("On not found"));
         if (!handleFileRead(server.uri())){                  // send it if it exists
-            server.send(404, "text/plain", "Not Found");; // otherwise, respond with a 404 (Not Found) error
+                    
+; // otherwise, respond with a 404 (Not Found) error
         }
       });
   
   /*server.serveStatic("/", SPIFFS, "/index.html");*/
-  server.serveStatic("/css", SPIFFS, "/css");
-  server.serveStatic("/js", SPIFFS, "/js");
-  server.serveStatic("/img", SPIFFS, "/img");
-  server.serveStatic("/meteo", SPIFFS, "/index.html");
-  server.serveStatic("/poele", SPIFFS, "/index.html");
-  server.serveStatic("/configuration", SPIFFS, "/index.html");
-  server.serveStatic("/help", SPIFFS, "/index.html");
-  server.serveStatic("/api/historymeteoheure.json", SPIFFS, "/historymeteoheure.json");
-  server.serveStatic("/api/historymeteoquotidien.json", SPIFFS, "/historymeteoquotidien.json");
-  server.serveStatic("/api/historymeteohebdo.json", SPIFFS, "/historymeteohebdo.json");
-  server.serveStatic("/api/historytotal.json", SPIFFS, "/historytotal.json");
-  server.serveStatic("/api/statut.json", SPIFFS, "/statut.json");
+  //server.serveStatic("/css", SPIFFS, "/css");
+  //server.serveStatic("/js", SPIFFS, "/js");
+  //server.serveStatic("/img", SPIFFS, "/img");
+  server.serveStatic("/meteo", SPIFFS, "/index.html","no-cache, no-store, must-revalidate");
+  server.serveStatic("/poele", SPIFFS, "/index.html","no-cache, no-store, must-revalidate");
+  server.serveStatic("/configuration", SPIFFS, "/index.html","no-cache, no-store, must-revalidate");
+  server.serveStatic("/help", SPIFFS, "/index.html","no-cache, no-store, must-revalidate");
+  server.serveStatic("/api/historymeteoheure.json", SPIFFS, "/historymeteoheure.json","no-cache, no-store, must-revalidate");
+  server.serveStatic("/api/historymeteoquotidien.json", SPIFFS, "/historymeteoquotidien.json","no-cache, no-store, must-revalidate");
+  server.serveStatic("/api/historymeteohebdo.json", SPIFFS, "/historymeteohebdo.json","no-cache, no-store, must-revalidate");
+  server.serveStatic("/api/historytotal.json", SPIFFS, "/historytotal.json","no-cache, no-store, must-revalidate");
+  server.serveStatic("/api/statut.json", SPIFFS, "/statut.json","no-cache, no-store, must-revalidate");
   server.on("/api/mesure.json", sendMesures);
   server.on("/api/histo", sendMesuresHisto);
   server.on("/api/update", majstatut);
@@ -692,45 +746,48 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
+  static unsigned long MillisTestWifi = millis();
  // display.startscrollright(0x00, 0x0F);
   server.handleClient();
   ftpSrv.handleFTP(); 
-
+  
 //Serial.println("Wlconnect : " + (String)WL_CONNECTED + " : " + (String)WiFi.status());
 
   //Gestion du boutton Reset
   bouttonReset ();
+  //Serial.print ("lecture bouton : ");
+  //Serial.println (analogRead(A0));
 
   //controle du wifi
   if (millis()-MillisTestWifi>=DelaisTestWifi){
+    MillisTestWifi = millis();
     updatestatut ();
     Serial.print("test de la connexion wifi : ");
-//    if (!pinger.Ping( WiFi.gatewayIP())){
- if (WiFi.status()!= WL_CONNECTED){
-      Serial.println("wifi KO");
-      DisplayLCD("Wifi KO");
-      couleur_statut=&couleur_error[0];
-      displayColor(&couleur_statut[0], luminosite);
-      WiFi.reconnect();
-      StatutWifi = false;
-    } else if (StatutWifi == false) {
-      Serial.println("Wifi de nouveau OK");
-      StatutWifi = true;
-      if (Mf==true){ //marche forcée 
-        couleur_statut=&couleur_forcee[0];
-      }
-      else if ( S ==true){ // en marche sans forçage
-        couleur_statut=&couleur_haut[0];
-      } else { // éteint
-        couleur_statut=&couleur_fonction[0];
-      }
-      displayColor(&couleur_statut[0], luminosite);
-    }else{
-      Serial.println("Wifi OK");
-      DisplayLCD("Wifi OK");
-      dyndns ();
+    if (WiFi.status()!= WL_CONNECTED){
+        Serial.println("wifi KO");
+        DisplayLCD("Wifi KO");
+        couleur_statut=&couleur_error[0];
+        displayColor(&couleur_statut[0], luminosite);
+        WiFi.reconnect();
+        StatutWifi = false;
+      } else if (StatutWifi == false) {
+        Serial.println("Wifi de nouveau OK");
+        DisplayLCD("Wifi OK");
+        StatutWifi = true;
+        if (Mf==true){ //marche forcée 
+          couleur_statut=&couleur_forcee[0];
+        } else if ( S ==true){ 
+          // en marche sans forçage
+          couleur_statut=&couleur_haut[0];
+        } else { // éteint
+          couleur_statut=&couleur_fonction[0];
+        }
+        displayColor(&couleur_statut[0], luminosite);
+      }else{
+        Serial.println("Wifi OK");
+        DisplayLCD("Wifi OK");
+        dyndns ();
     }
-    MillisTestWifi = millis();
   }    
 
   //mesure
@@ -739,17 +796,12 @@ void loop() {
     displayColor(&couleur_mesure[0], luminosite);  // turn the LED on (HIGH is the voltage level)
     timeClient.update();
     delay(100);
-
     sensors.requestTemperatures(); //Demande la température aux capteurs
     temp = floattoint (sensors.getTempCByIndex(0));
     DateMesure = timeClient.getEpochTime();
-
     if (temp != -127 && DateMesure > PrevDateMesure){
       PrevDateMesure = DateMesure;
       ctrlchauff(); // controle d'enclenchement chauffage
-      timeClient.setTimeOffset(3600);
-      DisplayLCD(timeClient.getFormattedTime());
-      timeClient.setTimeOffset(0);
       tab_mesure[nbenr]=temp;
       nbenr++;
       if (MillisMesure - MillisEnr > DelaisEnr ){
@@ -791,33 +843,53 @@ void loop() {
         temp = roundf(mesure_total/(nbenr-2));
         insmesure();
         nbenr = 0;
-      }
-      
+      } 
     }
+    //DisplayLCD("");
     displayColor(&couleur_statut[0], luminosite);    // turn the LED off by making the voltage LOW
   }
-  delay(100);                       // wait for a 0,1 second
+  if (millis()-MillisLCD>=1000){
+    MillisLCD = millis();
+    DisplayLCD("");
+  }
+  delay(10);                       // wait for a 0,1 second
 }
 
 
 void displayColor(byte *couleur,byte lum) {
+  //controle du pourcentage d'allumage des led 
   if (lum>100){lum=100;}
-//Serial.println("Rauge : " + (String)(couleur[0]*lum/100));
   analogWrite(Rouge, couleur[0]*lum/100);
-  //digitalWrite(Rouge,HIGH);
   analogWrite(Vert, couleur[1]*lum/100);
   analogWrite(Bleu, couleur[2]*lum/100);
 }
 
 void DisplayLCD (String message){
+    if (message == ""){
+      timeClient.setTimeOffset(3600);
+      message=timeClient.getFormattedTime();
+      timeClient.setTimeOffset(0);
+    }
     display.clearDisplay();
     display.setTextSize(1);
     display.setCursor(0, 0);
     display.print(message);
     display.setCursor(121, 0);
-    if (S==true) {
+    if (S==true & Secu == 0) {
+      display.setCursor(121, 0);
       display.cp437(true);
       display.write(15);      
+    } else if (S==true & Secu != 0) {
+      display.setCursor(90, 0);
+      display.println("Secu");
+      display.setCursor(121, 0);
+      display.cp437(true);
+      display.write(15);
+    }
+    if (Mf==true) {
+      display.setCursor(70, 0);
+      display.println("Mf");
+     
     }
     display.drawLine(0, 9, 128, 9, WHITE);
     display.drawLine(0, 32, 128, 32, WHITE);
@@ -868,10 +940,23 @@ void bouttonReset (){
     Tc = Tc +5;
     Serial.println("Nouvelle température de consigne " + (String)floattoint(Tc));
     updatestatut ();
+    ctrlchauff();
+    DisplayLCD("");
   } else if (MoinsBoutton.pressed()){
     Tc = Tc -5;
     Serial.println("Nouvelle température de consigne " + (String)floattoint(Tc));
     updatestatut ();
+    ctrlchauff();
+    DisplayLCD("");
+  } else if (MFBoutton.pressed()){
+    Mf = !Mf;
+    if (Mf){
+      Serial.println("Marche Forcée activée");
+    } else {
+      Serial.println("Marche Forcée arrêtée");
+    }
+    ctrlchauff();
+    DisplayLCD("");
   } else {
     RESET = true;
   }
