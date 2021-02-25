@@ -520,6 +520,8 @@ String getContentType(String filename){
   else if(filename.endsWith(F(".svg")))    return F("image/svg+xml");
   else if(filename.endsWith(F(".ico")))     return F("image/x-icon");
   else if(filename.endsWith(F(".xml")))     return F("text/xml");
+  else if(filename.endsWith(F("manifest.json")))     return F("application/manifest+json");
+  else if(filename.endsWith(F(".json")))     return F("application/json");
   return F("text/plain");
 }
 
