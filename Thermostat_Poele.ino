@@ -1,3 +1,4 @@
+#include <ArduinoOTA.h>
 #include <OneWire.h> //Librairie du bus OneWire
 #include <math.h>
 #include <DallasTemperature.h> //Librairie du capteur
@@ -741,6 +742,29 @@ void setup() {
   server.on("/api/update", majstatut);
   server.begin();
 
+    DisplayChargement("Demarrage service MAJ OTA");
+   //Paramétrage du serveur web
+  Serial.println("Demarrage service MAJ OTA");
+ ArduinoOTA.setHostname("Thermostat-Poele");
+  ArduinoOTA.onStart([]() {
+    Serial.println("OTA Start");
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nOTA End");
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+    else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  });
+  ArduinoOTA.begin();
+
   DisplayChargement("Finalisation");
   couleur_statut=&couleur_fonction[0];
   displayColor(&couleur_statut[0], luminosite);
@@ -752,6 +776,7 @@ void loop() {
  // display.startscrollright(0x00, 0x0F);
   server.handleClient();
   ftpSrv.handleFTP(); 
+  ArduinoOTA.handle();
   
 //Serial.println("Wlconnect : " + (String)WL_CONNECTED + " : " + (String)WiFi.status());
 
