@@ -52,7 +52,7 @@ void Meteo::Update(unsigned long datedemesure, float pressionmesure,float txHumi
         } else {
           //Serial.println("stockage en position : " + (String)_nbenrmeteo);
           i = _Tab_Meteo.size();
-          Serial.println("size : " + (String)i);
+          //Serial.println("size : " + (String)i);
           _Tab_Meteo[i]["d"] = datedemesure;
           _Tab_Meteo[i]["p"] = pressionmesure;
           _Tab_Meteo[i]["h"] = txHumidite;
@@ -70,7 +70,7 @@ void Meteo::Update(unsigned long datedemesure, float pressionmesure,float txHumi
    Serial.println("maximum historique atteint");
    _nbenrmeteo = 0;
  }*/
- serializeJson(_Tab_Meteo,Serial);
+// serializeJson(_Tab_Meteo,Serial);
  file  = SPIFFS.open(_nomfichier, "w");
  Serial.println("Sauvegarde des données " + _nomfichier);
 // serializeJson(_Tab_Meteo, Serial);

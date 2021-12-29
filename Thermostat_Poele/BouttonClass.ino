@@ -4,11 +4,12 @@ Boutton::Boutton(int adcValue, int bounceDelay){
   _adcValue=adcValue; // valeur issue de la conv. analogique-numérique
   _bounceDelay=bounceDelay; // pause anti-rebonds
   _buttonPrevious=false;
-  _buttonHysteresis=10;  // fourchette de détection: adcValue + ou - hysteresis
+  _buttonHysteresis=20;  // fourchette de détection: adcValue + ou - hysteresis
 }
 
 boolean Boutton::pressed(){ // retourne true si basculement détecté
   int buttonValue = analogRead(A0);   // lecture de l'entrée analogique A0
+  //Serial.println ("button : " + String(buttonValue));
   boolean buttonJustPressed = 
     ( buttonValue >= _adcValue - _buttonHysteresis )
     && ( buttonValue <= _adcValue + _buttonHysteresis );  
@@ -17,6 +18,7 @@ boolean Boutton::pressed(){ // retourne true si basculement détecté
   if (toggle){
    delay(_bounceDelay); // pause anti-rebonds
    buttonValue = analogRead(A0);   // nouvelle lecture de l'entrée analogique A0
+   Serial.println ("button : " + String(buttonValue));
    buttonJustPressed = 
     ( buttonValue >= _adcValue - _buttonHysteresis )
     && ( buttonValue <= _adcValue + _buttonHysteresis );

@@ -35,9 +35,9 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 
 Boutton ResetBoutton(10, BOUNCE_DELAY);
-Boutton PlusBoutton(166, BOUNCE_DELAY);
-Boutton MoinsBoutton(113, BOUNCE_DELAY);
-Boutton MFBoutton(60, BOUNCE_DELAY);
+Boutton PlusBoutton(155, BOUNCE_DELAY);
+Boutton MoinsBoutton(105, BOUNCE_DELAY);
+Boutton MFBoutton(55, BOUNCE_DELAY);
 
 
 // Create an object of the class Bsec https://github.com/BoschSensortec/BSEC-Arduino-library
@@ -532,7 +532,8 @@ void setup() {
   char mdp[13]="Mot de passe";
   //char domainetemp[40]="votre domaine";
   char url[50]="www.ovh.com/nic/update?system=dyndns&hostname=";
- 
+
+  
   Serial.begin(115200); //Permet la communication en serial
   Serial.println("Port série initialisé");
 
