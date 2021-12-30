@@ -35,7 +35,7 @@ Le panneau de contrôle affiche l’heure, la température de consigne, la temp�
 Les boutons de droites servent à régler la consigne celui de gauche a allumer le poêle même si la consigne ne le nécessite pas (marche forcée)
 
 ## Portail WEB
-Le portail web offre les mêmes fonctionnalités que le panneau de contrôle en ajoutant des options de réglage et la consultation d’historiques.
+Le portail web offre les mêmes fonctionnalités que le panneau de contrôle en ajoutant des options de réglage et la consultation d’historiques. L’accès est contrôlé via le mot de passe indiqué lors de la configuration
 
 ![Photos page accueil]( https://github.com/rinty35/thermostat_poele/blob/master/Screenshot/accueil.jpg)
 
@@ -60,3 +60,5 @@ http://ip/api/mesure.json
 -	t > température
 -	h > hygrométrie
 -	pression > pression atmosphérique
+## Service FTP
+Il est possible d’accéder aux données en FTP avec le même couple utilisateur/password que pour le site web
