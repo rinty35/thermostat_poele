@@ -54,4 +54,9 @@ Elle affiche les informations concernant le wifi (IP, SSID du réseau, qualité 
 ![Photos meteo]( https://github.com/rinty35/thermostat_poele/blob/master/Screenshot/m%C3%A9teo1.jpg)
 
 L’onglet météo affiche les informations actuelles et historiques sur la température, hygrométrie, la pression atmosphérique et la qualité de l’air. L’historique est lissé pour gagner en volumétrie de stockage sur la puce et surtout en temps de traitement pour l’affichage.
-
+## API
+Il est possible de récupérer les informations via un fichier json dans une suite domotique type jeedom
+http://ip/api/mesure.json
+-	t > température
+-	h > hygrométrie
+-	pression > pression atmosphérique
