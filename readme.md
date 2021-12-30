@@ -38,9 +38,11 @@ Les boutons de droites servent à régler la consigne celui de gauche a allumer 
 Le portail web offre les mêmes fonctionnalités que le panneau de contrôle en ajoutant des options de réglage et la consultation d’historiques.
 
 ![Photos page accueil]( https://github.com/rinty35/thermostat_poele/blob/master/Screenshot/accueil.jpg)
+
 L’accueil affiche si le poêle chauffe (flamme rouge) ou non, la température courante, la possibilité d’activer la marche forcée ainsi que le réglage de la température de consigne. Un historique de la température est disponible avec en rouge les périodes de chauffage
 
 ![Photos réglages]( https://github.com/rinty35/thermostat_poele/blob/master/Screenshot/config.jpg)
+
 La page de réglage affiche si le mode protection (interdisant un allumage de moins de 15min) est activé et si oui pour combien de temps.
 
 Elle permet le réglage des seuils de déclanchement par 0,5°C en dessous et au-dessus de la température de consigne (pour éviter des cycles d’allumage/extinction trop fréquent)
@@ -49,5 +51,7 @@ Elle permet le réglage des seuils de déclanchement par 0,5°C en dessous et au
 
 Elle affiche les informations concernant le wifi (IP, SSID du réseau, qualité du signal)
 
-![Photos meteo]( https://github.com/rinty35/thermostat_poele/blob/master/Screenshot/météo1.jpg)
+![Photos meteo]( https://github.com/rinty35/thermostat_poele/blob/master/Screenshot/m%C3%A9teo1.jpg)
+
 L’onglet météo affiche les informations actuelles et historiques sur la température, hygrométrie, la pression atmosphérique et la qualité de l’air. L’historique est lissé pour gagner en volumétrie de stockage sur la puce et surtout en temps de traitement pour l’affichage.
+
