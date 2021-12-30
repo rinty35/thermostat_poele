@@ -23,7 +23,7 @@ Il s’agit d’un thermostat connecté pour tout chauffage nécessitant un cont
 ## Modélisation 3D
 Conception sous Freecad
 ## Fonctionnement
-1.	Sur le boitier principal : appuie long pour réinitialiser le boitier (clignotement de la LED du boitier en rouge)
+1.	Sur le boitier principal : appui long pour réinitialiser le boitier (clignotement de la LED du boitier en rouge)
 2.	A la première connexion : portail de connexion wifi et paramétrage accès web / client OVH Dyndns
 3.	Au second démarrage affichage de l’IP sur le réseau local lors du démarrage (LED couleur blanche)
 4.	Passage de la LED en couleur verte une fois le démarrage finalisée / bleu lors d’une mesure / rouge en cas de disfonctionnement / violet en cas déclanchement marche forcée / jaune en cas de chauffage sur consigne thermostat. 
