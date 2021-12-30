@@ -22,11 +22,11 @@ Il s’agit d’un thermostat connecté pour tout chauffage nécessitant un cont
 -	ESP8266FtpServer
 ## Modélisation 3D
 Conception sous Freecad
-##Fonctionnement
+## Fonctionnement
 1.	Sur le boitier principal : appuie long pour réinitialiser le boitier (clignotement de la LED du boitier en rouge)
 2.	A la première connexion : portail de connexion wifi et paramétrage accès web / client OVH Dyndns
 3.	Au second démarrage affichage de l’IP sur le réseau local lors du démarrage (LED couleur blanche)
-4.	Passage de la LED en couleur verte une fois le démarrage finalisée / bleu lors d’une mesure / rouge en cas de disfonctionnement / violet en cas déclanchement marche forcée / jaune en cas de chauffage sur consigne thermostat.
+4.	Passage de la LED en couleur verte une fois le démarrage finalisée / bleu lors d’une mesure / rouge en cas de disfonctionnement / violet en cas déclanchement marche forcée / jaune en cas de chauffage sur consigne thermostat. 
 ![Photos panneau de controle](https://github.com/rinty35/thermostat_poele/blob/master/Photos/panneau_détail.jpg)
 
 Le panneau de contrôle affiche l’heure, la température de consigne, la température actuelle, l’hygrométrie, la pression atmosphérique. A cela s’ajoute dans la partie supérieure droite une étoile quand le chauffage est allumé, le message « sécu » quand le démarrage a eu lieu dans les 15minutes pour éviter des cycles de démarrage/extinction trop rapprochés du poêle, le message « Mf » pour marche forcée
